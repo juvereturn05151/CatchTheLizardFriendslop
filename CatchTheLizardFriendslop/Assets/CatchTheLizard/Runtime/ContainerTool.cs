@@ -3,21 +3,20 @@ using Unity.Netcode;
 
 namespace CatchTheLizard
 {
-    public sealed class ContainerTool : HoldableItem, IUsableItem
+    public sealed class ContainerTool : HoldableItem
     {
-        [SerializeField] float captureRange = 1.6f;
+        [SerializeField] float placementRange = 2.2f;
+        [SerializeField] Vector3 capturedLocalPosition = new(0f, 0.38f, 0f);
         [SerializeField] Renderer indicator;
         public readonly NetworkVariable<bool> ContainsLizard = new(false);
 
-        public void ServerUse(NetworkPlayer user, HandSlot hand)
+        public bool ServerTryStoreLizard(NetworkPlayer user, LizardController lizard)
         {
-            if (!IsServer || ContainsLizard.Value) return;
-            LizardController lizard = FindFirstObjectByType<LizardController>();
-            if (lizard != null && lizard.State.Value == LizardState.Stunned && Vector3.Distance(transform.position, lizard.transform.position) <= captureRange)
-            {
-                ContainsLizard.Value = true;
-                lizard.ServerCapture(NetworkObjectId);
-            }
+            if (!IsServer || ContainsLizard.Value || lizard == null || !lizard.IsHeld) return false;
+            if (lizard.HolderClientId.Value != user.OwnerClientId || Vector3.Distance(user.transform.position, transform.position) > placementRange) return false;
+            ContainsLizard.Value = true;
+            lizard.ServerCapture(NetworkObjectId, capturedLocalPosition);
+            return true;
         }
 
         protected override void Update()

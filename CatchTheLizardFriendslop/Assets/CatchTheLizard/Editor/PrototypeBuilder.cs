@@ -149,12 +149,12 @@ namespace CatchTheLizard.Editor
         static void BuildRoom(Material floor, Material wall, Material trim, Material sofa)
         {
             GameObject room = new("Prototype House Room");
-            Primitive("Floor", PrimitiveType.Cube, room.transform, new Vector3(0, -0.15f, 0), new Vector3(18, 0.3f, 14), floor);
-            Primitive("BackWall", PrimitiveType.Cube, room.transform, new Vector3(0, 2f, 7f), new Vector3(18, 4, 0.25f), wall);
-            Primitive("LeftWall", PrimitiveType.Cube, room.transform, new Vector3(-9f, 2f, 0), new Vector3(0.25f, 4, 14), wall);
-            Primitive("RightWall", PrimitiveType.Cube, room.transform, new Vector3(9f, 2f, 0), new Vector3(0.25f, 4, 14), wall);
-            Primitive("FrontWallL", PrimitiveType.Cube, room.transform, new Vector3(-5.5f, 2f, -7f), new Vector3(7, 4, 0.25f), wall);
-            Primitive("FrontWallR", PrimitiveType.Cube, room.transform, new Vector3(5.5f, 2f, -7f), new Vector3(7, 4, 0.25f), wall);
+            ClimbablePrimitive("Floor", room.transform, new Vector3(0, -0.15f, 0), new Vector3(18, 0.3f, 14), floor);
+            ClimbablePrimitive("BackWall", room.transform, new Vector3(0, 2f, 7f), new Vector3(18, 4, 0.25f), wall);
+            ClimbablePrimitive("LeftWall", room.transform, new Vector3(-9f, 2f, 0), new Vector3(0.25f, 4, 14), wall);
+            ClimbablePrimitive("RightWall", room.transform, new Vector3(9f, 2f, 0), new Vector3(0.25f, 4, 14), wall);
+            ClimbablePrimitive("FrontWallL", room.transform, new Vector3(-5.5f, 2f, -7f), new Vector3(7, 4, 0.25f), wall);
+            ClimbablePrimitive("FrontWallR", room.transform, new Vector3(5.5f, 2f, -7f), new Vector3(7, 4, 0.25f), wall);
             Primitive("DoorFrameTop", PrimitiveType.Cube, room.transform, new Vector3(0, 3.45f, -7f), new Vector3(4, 1.1f, 0.35f), trim);
             Primitive("TableTop", PrimitiveType.Cube, room.transform, new Vector3(-2.7f, 1f, 1.7f), new Vector3(3.2f, 0.22f, 1.7f), trim);
             foreach (Vector3 p in new[] { new Vector3(-4.05f,.45f,1.05f), new Vector3(-1.35f,.45f,1.05f), new Vector3(-4.05f,.45f,2.35f), new Vector3(-1.35f,.45f,2.35f) })
@@ -182,6 +182,7 @@ namespace CatchTheLizard.Editor
             GameObject tail = Primitive("Tail", PrimitiveType.Capsule, root.transform, new Vector3(0,0,-.62f), new Vector3(.16f,.16f,.7f), mat, false); tail.transform.localRotation = Quaternion.Euler(90,0,0);
             for (int i=0;i<4;i++) { float side = i%2==0?-1:1; float z=i<2?.25f:-.25f; GameObject leg=Primitive("Leg",PrimitiveType.Cube,root.transform,new Vector3(side*.27f,-.04f,z),new Vector3(.32f,.06f,.08f),mat,false); leg.transform.localRotation=Quaternion.Euler(0,side*25f,0); }
             SerializedObject so = new(lizard); SetArray(so.FindProperty("visuals"), root.GetComponentsInChildren<Renderer>()); so.ApplyModifiedPropertiesWithoutUndo();
+            ConfigureItem(lizard, "Lizard", new Vector3(0,-.04f,.08f), new Vector3(0,90,0));
         }
 
         static void BuildBroom(Vector3 position, Material mat)
@@ -245,6 +246,13 @@ namespace CatchTheLizard.Editor
             GameObject go=GameObject.CreatePrimitive(type); go.name=name; go.transform.SetParent(parent); go.transform.localPosition=position; go.transform.localScale=scale;
             if (material!=null) go.GetComponent<Renderer>().sharedMaterial=material;
             if (!collider) Object.DestroyImmediate(go.GetComponent<Collider>());
+            return go;
+        }
+
+        static GameObject ClimbablePrimitive(string name, Transform parent, Vector3 position, Vector3 scale, Material material)
+        {
+            GameObject go = Primitive(name, PrimitiveType.Cube, parent, position, scale, material);
+            go.AddComponent<LizardClimbableSurface>();
             return go;
         }
 

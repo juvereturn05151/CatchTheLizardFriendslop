@@ -38,6 +38,18 @@ namespace CatchTheLizard
                 ConfigureTransport(defaultAddress);
                 NetworkManager.Singleton.StartClient();
             }
+#if UNITY_EDITOR
+            if (Array.Exists(args, arg => arg == "-ceilingtest"))
+            {
+                yield return CeilingNavigationSmoke.Run();
+                yield break;
+            }
+            if (Array.Exists(args, arg => arg == "-gameplaytest"))
+            {
+                yield return GameplayMilestoneSmoke.Run();
+                yield break;
+            }
+#endif
             if (Array.Exists(args, arg => arg == "-smoketest"))
             {
                 yield return new WaitForSeconds(5f);
@@ -82,6 +94,13 @@ namespace CatchTheLizard
 
             if (!manager.IsListening)
             {
+                // Keep the cursor available while the connection menu is open. This must
+                // happen before StartHost/StartClient: spawning the local player locks the
+                // cursor, and unlocking it afterwards prevents NetworkPlayer from reading
+                // movement input until Escape is pressed.
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
                 GUILayout.BeginArea(new Rect(Screen.width / 2f - 190, Screen.height / 2f - 155, 380, 310), GUI.skin.box);
                 GUILayout.Label("CATCH THE LIZARD", titleStyle, GUILayout.Height(55));
                 GUILayout.Label("LAN prototype · 2–4 players", centerStyle);
@@ -102,8 +121,6 @@ namespace CatchTheLizard
                 GUILayout.Space(10);
                 GUILayout.Label("WASD move · Mouse look · Shift sprint · Ctrl crouch\nE pick up · Q/R drop · LMB/RMB use · Esc cursor", centerStyle);
                 GUILayout.EndArea();
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
                 return;
             }
 
@@ -132,6 +149,7 @@ namespace CatchTheLizard
             TeamWon.Value = false;
             LizardController lizard = FindFirstObjectByType<LizardController>();
             if (lizard != null) lizard.ServerReset();
+            foreach (PlayerHands hands in FindObjectsByType<PlayerHands>(FindObjectsSortMode.None)) hands.ServerResetHands();
             foreach (HoldableItem item in FindObjectsByType<HoldableItem>(FindObjectsSortMode.None)) item.ServerReset();
             foreach (NetworkPlayer player in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None)) player.ServerResetPosition();
         }

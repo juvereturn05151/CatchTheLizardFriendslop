@@ -6,24 +6,25 @@ namespace CatchTheLizard
     [RequireComponent(typeof(NetworkObject), typeof(Collider))]
     public class HoldableItem : NetworkBehaviour
     {
-        [SerializeField] string displayName = "Item";
-        [SerializeField] Vector3 heldLocalPosition;
-        [SerializeField] Vector3 heldLocalEuler;
+        [SerializeField] protected string displayName = "Item";
+        [SerializeField] protected Vector3 heldLocalPosition;
+        [SerializeField] protected Vector3 heldLocalEuler;
         public string DisplayName => displayName;
         public readonly NetworkVariable<ulong> HolderClientId = new(PlayerHands.Empty);
         public readonly NetworkVariable<byte> HeldHand = new(0);
         public readonly NetworkVariable<Vector3> WorldPosition = new();
         public readonly NetworkVariable<Quaternion> WorldRotation = new();
         public bool IsHeld => HolderClientId.Value != PlayerHands.Empty;
+        public virtual float PickupDistance => 3.2f;
         Vector3 startPosition;
         Quaternion startRotation;
-        Collider itemCollider;
-        Rigidbody body;
+        protected Collider ItemCollider { get; private set; }
+        protected Rigidbody Body { get; private set; }
 
         protected virtual void Awake()
         {
-            itemCollider = GetComponent<Collider>();
-            body = GetComponent<Rigidbody>();
+            ItemCollider = GetComponent<Collider>();
+            Body = GetComponent<Rigidbody>();
             startPosition = transform.position;
             startRotation = transform.rotation;
         }
@@ -39,9 +40,13 @@ namespace CatchTheLizard
 
         protected virtual void Update()
         {
+            // Scene items must retain their placed pose until networking has supplied
+            // their initial state. Otherwise they converge on the lizard at the origin.
+            if (!IsSpawned) return;
+
             bool held = IsHeld;
-            itemCollider.enabled = !held;
-            if (body != null) body.isKinematic = held;
+            ItemCollider.enabled = !held;
+            if (Body != null) Body.isKinematic = held;
             if (held)
             {
                 NetworkPlayer owner = NetworkPlayer.FindByClientId(HolderClientId.Value);
@@ -63,20 +68,22 @@ namespace CatchTheLizard
             }
         }
 
-        public void ServerPickup(ulong clientId, HandSlot hand)
+        public virtual bool CanPickup(NetworkPlayer player) => !IsHeld;
+
+        public virtual void ServerPickup(ulong clientId, HandSlot hand)
         {
             if (!IsServer) return;
             HolderClientId.Value = clientId;
             HeldHand.Value = (byte)hand;
-            if (body != null) { body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.isKinematic = true; }
+            if (Body != null) { Body.linearVelocity = Vector3.zero; Body.angularVelocity = Vector3.zero; Body.isKinematic = true; }
         }
 
-        public void ServerDrop(Vector3 position)
+        public virtual void ServerDrop(Vector3 position)
         {
             if (!IsServer) return;
             HolderClientId.Value = PlayerHands.Empty;
             transform.position = position;
-            if (body != null) { body.isKinematic = false; body.linearVelocity = Vector3.zero; }
+            if (Body != null) { Body.isKinematic = false; Body.linearVelocity = Vector3.zero; }
             WorldPosition.Value = position;
             WorldRotation.Value = transform.rotation;
         }
@@ -88,7 +95,7 @@ namespace CatchTheLizard
             transform.SetPositionAndRotation(startPosition, startRotation);
             WorldPosition.Value = startPosition;
             WorldRotation.Value = startRotation;
-            if (body != null) { body.isKinematic = false; body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; }
+            if (Body != null) { Body.isKinematic = false; Body.linearVelocity = Vector3.zero; Body.angularVelocity = Vector3.zero; }
         }
     }
 }

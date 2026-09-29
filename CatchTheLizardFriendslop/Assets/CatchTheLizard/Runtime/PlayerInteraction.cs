@@ -18,11 +18,25 @@ namespace CatchTheLizard
             Ray ray = new(player.CameraPivot.position, player.CameraPivot.forward);
             if (Physics.Raycast(ray, out RaycastHit hit, interactionDistance, ~0, QueryTriggerInteraction.Ignore))
             {
+                ContainerTool container = hit.collider.GetComponentInParent<ContainerTool>();
+                if (container != null && !container.ContainsLizard.Value && hands.TryGetHeldLizard(out _, out _))
+                {
+                    prompt = "[E] PUT LIZARD IN CONTAINER";
+                    if (Input.GetKeyDown(KeyCode.E)) hands.RequestPlaceLizard(container.NetworkObjectId);
+                    return;
+                }
+
                 HoldableItem item = hit.collider.GetComponentInParent<HoldableItem>();
                 if (item != null && !item.IsHeld)
                 {
-                    prompt = $"[E] Pick up {item.DisplayName}";
-                    if (Input.GetKeyDown(KeyCode.E)) hands.RequestPickup(item.NetworkObjectId);
+                    if (item is LizardController lizard)
+                    {
+                        if (lizard.State.Value != LizardState.Stunned) return;
+                        prompt = hands.HasFreeHand ? "[E] CATCH LIZARD" : "HANDS FULL";
+                    }
+                    else prompt = hands.HasFreeHand ? $"[E] Pick up {item.DisplayName}" : "HANDS FULL";
+
+                    if (hands.HasFreeHand && Input.GetKeyDown(KeyCode.E)) hands.RequestPickup(item.NetworkObjectId);
                 }
             }
         }

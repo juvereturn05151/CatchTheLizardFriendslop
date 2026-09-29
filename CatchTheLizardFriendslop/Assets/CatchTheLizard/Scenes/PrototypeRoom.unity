@@ -546,6 +546,7 @@ GameObject:
   - component: {fileID: 62119702}
   - component: {fileID: 62119701}
   - component: {fileID: 62119700}
+  - component: {fileID: 2200000001}
   m_Layer: 0
   m_Name: FrontWallR
   m_TagString: Untagged
@@ -1579,6 +1580,7 @@ GameObject:
   - component: {fileID: 563559915}
   - component: {fileID: 563559914}
   - component: {fileID: 563559913}
+  - component: {fileID: 2200000002}
   m_Layer: 0
   m_Name: LeftWall
   m_TagString: Untagged
@@ -1711,14 +1713,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardController
   ShowTopMostFoldoutHeaderGroup: 1
-  idleSpeed: 0.9
+  displayName: Lizard
+  heldLocalPosition: {x: 0, y: -0.04, z: 0.08}
+  heldLocalEuler: {x: 0, y: 90, z: 0}
+  floorMovementSpeed: 0.9
+  wallMovementSpeed: 1.6
   fleeSpeed: 6.2
-  alertRadius: 5.5
+  playerDetectionRadius: 5.5
   safeDistance: 7.5
-  roomHalfExtents: {x: 8.5, y: 6.5}
+  surfaceDetectionDistance: 0.65
+  surfaceOffset: 0.16
+  surfaceTransitionSpeed: 9
+  climbPreference: 0.85
+  wallFleeWeighting: 1.2
   stunThreshold: 1
   stunDuration: 5
   sprayRecoveryRate: 0.16
+  stunnedWallLizardFalls: 1
+  fallGravity: 18
+  catchInteractionDistance: 2.7
+  droppedLizardRecoveryTime: 2.5
   visuals:
   - {fileID: 1836788714}
   - {fileID: 2139138299}
@@ -2077,6 +2091,7 @@ GameObject:
   - component: {fileID: 790150148}
   - component: {fileID: 790150147}
   - component: {fileID: 790150146}
+  - component: {fileID: 2200000003}
   m_Layer: 0
   m_Name: RightWall
   m_TagString: Untagged
@@ -7308,6 +7323,7 @@ GameObject:
   - component: {fileID: 1010904460}
   - component: {fileID: 1010904459}
   - component: {fileID: 1010904458}
+  - component: {fileID: 2200000004}
   m_Layer: 0
   m_Name: BackWall
   m_TagString: Untagged
@@ -7510,6 +7526,7 @@ GameObject:
   - component: {fileID: 1276145064}
   - component: {fileID: 1276145063}
   - component: {fileID: 1276145062}
+  - component: {fileID: 2200000005}
   m_Layer: 0
   m_Name: FrontWallL
   m_TagString: Untagged
@@ -8231,8 +8248,9 @@ MonoBehaviour:
   heldLocalEuler: {x: 0, y: 0, z: 0}
   range: 4
   coneDot: 0.72
-  exposurePerUse: 0.12
+  exposurePerSecond: 1.35
   sprayParticles: {fileID: 863970454}
+  sprayAudio: {fileID: 0}
 --- !u!54 &1634023747
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -8926,6 +8944,7 @@ GameObject:
   - component: {fileID: 1936923373}
   - component: {fileID: 1936923372}
   - component: {fileID: 1936923371}
+  - component: {fileID: 2200000006}
   m_Layer: 0
   m_Name: Floor
   m_TagString: Untagged
@@ -9286,7 +9305,8 @@ MonoBehaviour:
   displayName: Container
   heldLocalPosition: {x: 0, y: -0.12, z: 0.35}
   heldLocalEuler: {x: 0, y: 0, z: 0}
-  captureRange: 1.6
+  placementRange: 2.2
+  capturedLocalPosition: {x: 0, y: 0.38, z: 0}
   indicator: {fileID: 1369176657}
 --- !u!54 &2084946355
 Rigidbody:
@@ -9483,3 +9503,81 @@ SceneRoots:
   - {fileID: 1634023750}
   - {fileID: 2084946358}
   - {fileID: 1847659756}
+--- !u!114 &2200000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 62119698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1
+--- !u!114 &2200000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563559911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1
+--- !u!114 &2200000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 790150144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1
+--- !u!114 &2200000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1010904456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1
+--- !u!114 &2200000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1276145060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1
+--- !u!114 &2200000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936923369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b8a8f778d64f1f92d3b5db46f03c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchTheLizard.LizardClimbableSurface
+  allowHorizontal: 1

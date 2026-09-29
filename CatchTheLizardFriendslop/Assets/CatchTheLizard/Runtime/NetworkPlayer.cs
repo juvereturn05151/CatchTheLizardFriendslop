@@ -31,6 +31,8 @@ namespace CatchTheLizard
         float verticalVelocity;
         float sendTimer;
         Vector3 spawnPosition;
+        bool leftUseHeld;
+        bool rightUseHeld;
 
         public override void OnNetworkSpawn()
         {
@@ -69,7 +71,11 @@ namespace CatchTheLizard
                 Cursor.lockState = locked ? CursorLockMode.None : CursorLockMode.Locked;
                 Cursor.visible = locked;
             }
-            if (Cursor.lockState != CursorLockMode.Locked || (NetworkGameManager.Instance != null && NetworkGameManager.Instance.TeamWon.Value)) return;
+            if (Cursor.lockState != CursorLockMode.Locked || (NetworkGameManager.Instance != null && NetworkGameManager.Instance.TeamWon.Value))
+            {
+                StopUsingHands();
+                return;
+            }
 
             float yaw = Input.GetAxisRaw("Mouse X") * mouseSensitivity;
             float lookY = Input.GetAxisRaw("Mouse Y") * mouseSensitivity;
@@ -88,10 +94,12 @@ namespace CatchTheLizard
             cameraPivot.localPosition = Vector3.up * (controller.height - 0.18f);
             controller.Move(motion * Time.deltaTime);
 
-            if (Input.GetKeyDown(KeyCode.Q)) Hands.RequestDrop(HandSlot.Left);
-            if (Input.GetKeyDown(KeyCode.R)) Hands.RequestDrop(HandSlot.Right);
-            if (Input.GetMouseButton(0)) Hands.RequestUse(HandSlot.Left);
-            if (Input.GetMouseButton(1)) Hands.RequestUse(HandSlot.Right);
+            bool leftPressed = Input.GetMouseButton(0);
+            bool rightPressed = Input.GetMouseButton(1);
+            if (leftPressed != leftUseHeld) { leftUseHeld = leftPressed; Hands.RequestSetUse(HandSlot.Left, leftPressed); }
+            if (rightPressed != rightUseHeld) { rightUseHeld = rightPressed; Hands.RequestSetUse(HandSlot.Right, rightPressed); }
+            if (Input.GetKeyDown(KeyCode.Q)) { leftUseHeld = false; Hands.RequestDrop(HandSlot.Left); }
+            if (Input.GetKeyDown(KeyCode.R)) { rightUseHeld = false; Hands.RequestDrop(HandSlot.Right); }
 
             sendTimer -= Time.deltaTime;
             if (sendTimer <= 0f)
@@ -99,6 +107,12 @@ namespace CatchTheLizard
                 sendTimer = 0.05f;
                 SubmitTransformServerRpc(transform.position, transform.eulerAngles.y);
             }
+        }
+
+        void StopUsingHands()
+        {
+            if (leftUseHeld) { leftUseHeld = false; Hands.RequestSetUse(HandSlot.Left, false); }
+            if (rightUseHeld) { rightUseHeld = false; Hands.RequestSetUse(HandSlot.Right, false); }
         }
 
         [ServerRpc]

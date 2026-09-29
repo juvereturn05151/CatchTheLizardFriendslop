@@ -1,35 +1,63 @@
+using Unity.Netcode;
 using UnityEngine;
 
 namespace CatchTheLizard
 {
-    public sealed class SprayTool : HoldableItem, IUsableItem
+    public sealed class SprayTool : HoldableItem, IContinuousUsableItem
     {
         [SerializeField] float range = 4f;
         [SerializeField, Range(0.2f, 1f)] float coneDot = 0.72f;
-        [SerializeField] float exposurePerUse = 0.12f;
+        [SerializeField] float exposurePerSecond = 1.35f;
         [SerializeField] ParticleSystem sprayParticles;
-        float lastVisualUse;
+        [SerializeField] AudioSource sprayAudio;
+        public readonly NetworkVariable<bool> IsSpraying = new(false);
 
-        public void ServerUse(NetworkPlayer user, HandSlot hand)
+        public void ServerSetUsing(NetworkPlayer user, HandSlot hand, bool active)
         {
             if (!IsServer) return;
-            PlaySprayClientRpc();
+            bool isCorrectHolder = IsHeld && HolderClientId.Value == user.OwnerClientId && HeldHand.Value == (byte)hand;
+            IsSpraying.Value = active && isCorrectHolder;
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            bool shouldPlay = IsHeld && IsSpraying.Value;
+            if (sprayParticles != null)
+            {
+                if (shouldPlay && !sprayParticles.isPlaying) sprayParticles.Play();
+                else if (!shouldPlay && sprayParticles.isPlaying) sprayParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+            if (sprayAudio != null)
+            {
+                if (shouldPlay && !sprayAudio.isPlaying) sprayAudio.Play();
+                else if (!shouldPlay && sprayAudio.isPlaying) sprayAudio.Stop();
+            }
+
+            if (!IsServer || !shouldPlay) return;
+            NetworkPlayer user = NetworkPlayer.FindByClientId(HolderClientId.Value);
+            if (user == null) { IsSpraying.Value = false; return; }
             LizardController lizard = FindFirstObjectByType<LizardController>();
             if (lizard == null || lizard.State.Value == LizardState.Captured) return;
             Vector3 origin = user.CameraPivot.position;
-            Vector3 to = lizard.transform.position + Vector3.up * 0.15f - origin;
+            Vector3 target = lizard.transform.position;
+            Vector3 to = target - origin;
             if (to.magnitude > range || Vector3.Dot(user.CameraPivot.forward, to.normalized) < coneDot) return;
-            bool blocked = Physics.Linecast(origin, lizard.transform.position + Vector3.up * 0.15f, out RaycastHit hit, ~0, QueryTriggerInteraction.Ignore);
+            bool blocked = Physics.Linecast(origin, target, out RaycastHit hit, ~0, QueryTriggerInteraction.Ignore);
             if (!blocked || hit.collider.GetComponentInParent<LizardController>() != null)
-                lizard.ServerApplySpray(exposurePerUse);
+                lizard.ServerApplySpray(exposurePerSecond * Time.deltaTime);
         }
 
-        [Unity.Netcode.ClientRpc]
-        void PlaySprayClientRpc()
+        public override void ServerDrop(Vector3 position)
         {
-            if (Time.time - lastVisualUse < 0.08f) return;
-            lastVisualUse = Time.time;
-            if (sprayParticles != null) sprayParticles.Play();
+            if (IsServer) IsSpraying.Value = false;
+            base.ServerDrop(position);
+        }
+
+        public override void ServerReset()
+        {
+            if (IsServer) IsSpraying.Value = false;
+            base.ServerReset();
         }
     }
 }
